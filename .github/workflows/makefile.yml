@@ -32,16 +32,24 @@ jobs:
         ls -lah
         tar czvf RustHound.tar.gz RustHound*
 
-    - name: Publish Artifact
+    - name: Publish Artifact linux_x86_64
       uses: actions/upload-artifact@v3
       with:
-        name: my_project
-        path: target/release/RustHound.tar.gz
+        name: RustHound for linux_x86_64
+        path: rusthound_x86_64
+
+    - name: Publish Artifact windows_x64
+      uses: actions/upload-artifact@v3
+      with:
+        name: RustHound for windows_x64
+        path: rusthound.exe
 
     - name: Publish GitHub Release
       uses: softprops/action-gh-release@v1
       with:
         draft: true
-        files: target/release/RustHound.tar.gz
+        files: |
+          rusthound_x86_64
+          rusthound.exe
         # body_path: Changes.md
           
