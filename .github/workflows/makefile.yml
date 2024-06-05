@@ -17,11 +17,13 @@ jobs:
     - name: Install dependencies
       run: |
         make install_windows_deps
-        make install_linux_musl_deps
-        make install_macos_deps
+        # make install_linux_musl_deps
+        # make install_macos_deps
 
     - name: install
-      run: make windows_x64
+      run: |
+        make linux_x86_64
+        make windows_x64
         
     - name: Package as Archive
       run: |
