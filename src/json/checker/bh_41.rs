@@ -55,6 +55,7 @@ pub fn add_default_groups(vec_groups: &mut Vec<serde_json::value::Value>, vec_co
     
     account_operators_group["ObjectIdentifier"] = sid.into();
     account_operators_group["Properties"]["name"] = name.into();
+    account_operators_group["Properties"]["highvalue"] = true.into();
     vec_groups.push(account_operators_group);
 
     // WINDOWS AUTHORIZATION ACCESS GROUP
@@ -127,6 +128,7 @@ pub fn add_default_groups(vec_groups: &mut Vec<serde_json::value::Value>, vec_co
 
     administrators_group["ObjectIdentifier"] = sid.into();
     administrators_group["Properties"]["name"] = name.into();
+    administrators_group["Properties"]["highvalue"] = true.into();
     vec_groups.push(administrators_group);
 
     // PRE-WINDOWS 2000 COMPATIBLE ACCESS
@@ -160,6 +162,7 @@ pub fn add_default_groups(vec_groups: &mut Vec<serde_json::value::Value>, vec_co
             
     print_operators_group["ObjectIdentifier"] = sid.into();
     print_operators_group["Properties"]["name"] = name.into();
+    print_operators_group["Properties"]["highvalue"] = true.into();
     vec_groups.push(print_operators_group); 
 
     // TERMINAL SERVER LICENSE SERVERS
@@ -346,8 +349,10 @@ pub fn replace_guid_gplink(vec_replaced: &mut Vec<serde_json::value::Value>, dn_
     pb.finish_and_clear();
 }
 
-/// This function will ad domainsid for gpos and for ous
-pub fn add_domain_sid(vec_replaced: &mut Vec<serde_json::value::Value>, dn_sid: &HashMap<String, String>)
+/// This function will ad domainsid
+pub fn add_domain_sid(
+    vec_replaced: &mut Vec<serde_json::value::Value>, 
+    dn_sid: &HashMap<String, String>)
 {
     // Needed for progress bar stats
     let pb = ProgressBar::new(1);
@@ -369,7 +374,9 @@ pub fn add_domain_sid(vec_replaced: &mut Vec<serde_json::value::Value>, dn_sid: 
             domain_sid = value[0].to_owned().to_string();
             break
         }
-        break
+        if domain_sid.len() > 0 {
+            break
+        }
     }
     pb.finish_and_clear();
     //trace!("domain_sid: {:?}",&domain_sid);
@@ -495,9 +502,9 @@ pub fn replace_sid_members(vec_groups: &mut Vec<serde_json::value::Value>, dn_si
 fn sid_maker_from_another_domain(vec_trusts: &Vec<serde_json::value::Value>, object_identifier: &String) -> String
 {
     for i in 0..vec_trusts.len() {
-        let ldap_dc = prepare_ldap_dc(&vec_trusts[i]["TargetDomainName"].as_str().unwrap().to_string());
+        let ldap_dc = prepare_ldap_dc(&vec_trusts[i]["TargetDomainName"].as_str().unwrap().to_string(),false);
         //trace!("LDAP_DC TRUSTED {:?}: {:?}", &i,&vec_trusts[i]);
-        if object_identifier.contains(ldap_dc.as_str())
+        if object_identifier.contains(ldap_dc[0].as_str())
         {
             //trace!("object_identifier '{}' contains trust domain '{}'",&object_identifier, &ldap_dc);
             let id = get_id_from_objectidentifier(object_identifier);
@@ -505,7 +512,14 @@ fn sid_maker_from_another_domain(vec_trusts: &Vec<serde_json::value::Value>, obj
             return sid
         }
     }
-    return "NULL_ID2".to_string()
+    if object_identifier.contains("CN=S-") {
+        let re = Regex::new(r"S-[0-9]{1}-[0-9]{1}-[0-9]{1,}-[0-9]{1,}-[0-9]{1,}-[0-9]{1,}-[0-9]{1,}").unwrap();
+        for sid in re.captures_iter(&object_identifier) 
+        {
+            return sid[0].to_owned().to_string();
+        }
+    }
+    return object_identifier.to_string()
 }
 
 // Get id from objectidentifier for all common group (Administrators ...)
