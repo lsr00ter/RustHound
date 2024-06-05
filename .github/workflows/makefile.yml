@@ -2,54 +2,52 @@ name: Makefile CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get install gcc-mingw-w64 -y
-        make install_windows_deps
-        # make install_linux_musl_deps
-        # make install_macos_deps
+      - name: Install dependencies
+        run: |
+          sudo apt-get install gcc-mingw-w64 -y
+          make install_windows_deps
+          # make install_linux_musl_deps
+          # make install_macos_deps
 
-    - name: install
-      run: |
-        make linux_x86_64
-        make windows_x64
-        
-    - name: Package as Archive
-      run: |
-        cd target/release
-        ls -lah
-        tar czvf RustHound.tar.gz RustHound*
+      - name: install
+        run: |
+          make linux_x86_64
+          make windows_x64
 
-    - name: Publish Artifact linux_x86_64
-      uses: actions/upload-artifact@v3
-      with:
-        name: RustHound for linux_x86_64
-        path: rusthound_x86_64
+      # - name: Package as Archive
+      #   run: |
+      #     cd target/release
+      #     ls -lah
+      #     tar czvf RustHound.tar.gz RustHound*
 
-    - name: Publish Artifact windows_x64
-      uses: actions/upload-artifact@v3
-      with:
-        name: RustHound for windows_x64
-        path: rusthound.exe
+      - name: Publish Artifact linux_x86_64
+        uses: actions/upload-artifact@v3
+        with:
+          name: RustHound for linux_x86_64
+          path: rusthound_x86_64
 
-    - name: Publish GitHub Release
-      uses: softprops/action-gh-release@v1
-      with:
-        draft: true
-        files: |
-          rusthound_x86_64
-          rusthound.exe
-        # body_path: Changes.md
-          
+      - name: Publish Artifact windows_x64
+        uses: actions/upload-artifact@v3
+        with:
+          name: RustHound for windows_x64
+          path: rusthound.exe
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            rusthound_x86_64
+            rusthound.exe
+          # body_path: Changes.md
